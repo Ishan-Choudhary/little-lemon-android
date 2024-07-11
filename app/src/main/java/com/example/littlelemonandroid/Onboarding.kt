@@ -1,8 +1,12 @@
 package com.example.littlelemonandroid
 
+import android.content.Context
+import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,8 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -25,32 +27,54 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
+import androidx.navigation.NavHostController
 import com.example.littlelemonandroid.ui.theme.Black
 import com.example.littlelemonandroid.ui.theme.DarkGray
 import com.example.littlelemonandroid.ui.theme.Green
 import com.example.littlelemonandroid.ui.theme.White
 import com.example.littlelemonandroid.ui.theme.Yellow
 
-
-@Preview(showBackground = true)
 @Composable
-fun Onboarding()    {
+fun Onboarding(navController: NavHostController) {
+    val verticalScrollState: ScrollState = rememberScrollState()
+    val focusManager: FocusManager = LocalFocusManager.current
+    val context : Context = LocalContext.current
 
-    val verticalScrollState : ScrollState = rememberScrollState()
+    var isAnyTextFieldFocused by remember { mutableStateOf(false) }
+    val firstName = remember { mutableStateOf("") }
+    val lastName = remember { mutableStateOf("") }
+    val email = remember { mutableStateOf("") }
 
-    Box(modifier = Modifier.fillMaxHeight().background(White))  {
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .background(White)
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    if (isAnyTextFieldFocused) {
+                        focusManager.clearFocus()
+                    }
+                }
+            }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
@@ -95,12 +119,29 @@ fun Onboarding()    {
                     .fillMaxHeight(0.75f)
                     .padding(horizontal = 10.dp)
             ) {
-                InputBoxes("First name", "Tilly")
-                InputBoxes("Last name", "Doe")
-                InputBoxes("Email", "tillydoe@example.com")
+                InputBoxes("First name", "Tilly", firstName) { isAnyTextFieldFocused = it }
+                InputBoxes("Last name", "Doe", lastName) { isAnyTextFieldFocused = it }
+                InputBoxes("Email", "tillydoe@example.com", email) { isAnyTextFieldFocused = it }
             }
             Button(
-                onClick = { /*TODO*/ },
+                onClick = {
+                    if (firstName.value.isNotEmpty() && lastName.value.isNotEmpty() && email.value.isNotEmpty()) {
+                        val sharedPrefs: SharedPreferences =
+                            context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                        Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT)
+                            .show()
+                        sharedPrefs.edit(commit = true) {
+                            putString("first name", firstName.value)
+                            putString("last name", lastName.value)
+                            putString("email", email.value)
+                            putBoolean("onboarded", true)
+                        }
+                        navController.navigate("Home ")
+                    }
+                    else    {
+                        Toast.makeText(context, "Registration unsuccessful. Please enter all data.", Toast.LENGTH_SHORT).show()
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Yellow),
                 shape = RoundedCornerShape(6.dp),
                 modifier = Modifier
@@ -110,35 +151,44 @@ fun Onboarding()    {
                 Text(
                     text = "Register",
                     style = MaterialTheme.typography.labelMedium,
-
-                    )
+                )
             }
             Spacer(modifier = Modifier.imePadding())
         }
     }
 }
-@Composable
-fun InputBoxes(boxLabel : String, placeholderText : String)    {
-    var inputBox by remember {
-        mutableStateOf("")
-    }
-    Column(
-        modifier = Modifier.padding(bottom = 20.dp)
-    ) {
-        Text(text = boxLabel, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-        OutlinedTextField(
-            value = inputBox,
-            onValueChange = {
-                inputBox = it
-            },
 
+@Composable
+fun InputBoxes(boxLabel: String, placeholderText: String, inputBox : MutableState<String>, onFocusChanged: (Boolean) -> Unit) {
+
+    var isFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    Column(
+        modifier = Modifier
+            .padding(bottom = 20.dp)
+            .focusRequester(focusRequester)
+            .onFocusChanged { focusState ->
+                isFocused = focusState.isFocused
+                onFocusChanged(isFocused)
+            }
+    ) {
+        Text(
+            text = boxLabel,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold
+        )
+        OutlinedTextField(
+            value = inputBox.value,
+            onValueChange = {
+                inputBox.value = it
+            },
             placeholder = {
                 Text(
                     text = placeholderText,
                     style = MaterialTheme.typography.labelSmall
                 )
             },
-
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Black,
                 unfocusedBorderColor = DarkGray,
@@ -150,10 +200,7 @@ fun InputBoxes(boxLabel : String, placeholderText : String)    {
                 .fillMaxWidth()
                 .padding(top = 10.dp),
             textStyle = MaterialTheme.typography.labelMedium,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Next
-            )
+            singleLine = true,
         )
-
     }
 }
