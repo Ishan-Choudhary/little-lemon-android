@@ -125,7 +125,8 @@ fun Onboarding(navController: NavHostController) {
             }
             Button(
                 onClick = {
-                    if (firstName.value.isNotEmpty() && lastName.value.isNotEmpty() && email.value.isNotEmpty()) {
+                    if (firstName.value.isNotEmpty() and lastName.value.isNotEmpty() and email.value.isNotEmpty()) {
+                        println("I am in here")
                         val sharedPrefs: SharedPreferences =
                             context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                         Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT)
@@ -136,7 +137,8 @@ fun Onboarding(navController: NavHostController) {
                             putString("email", email.value)
                             putBoolean("onboarded", true)
                         }
-                        navController.navigate("Home ")
+                        println("Near the navigate statement")
+                        navController.navigate(Home.route)
                     }
                     else    {
                         Toast.makeText(context, "Registration unsuccessful. Please enter all data.", Toast.LENGTH_SHORT).show()

@@ -19,6 +19,17 @@ private val MarkaziTextFamily = FontFamily(
 
 // Set of Material typography styles to start with
 val Typography = Typography(
+    titleMedium = TextStyle(
+        fontFamily = MarkaziTextFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 60.sp,
+    ),
+    titleSmall = TextStyle(
+        fontFamily = MarkaziTextFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 40.sp
+    ),
+
     bodyLarge = TextStyle(
         fontFamily = KarlaFontFamily,
         fontWeight = FontWeight.Normal,
@@ -38,7 +49,7 @@ val Typography = Typography(
     labelSmall = TextStyle(
         fontFamily = KarlaFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 15.sp,
+        fontSize = 13.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp,
         color = Black
@@ -46,7 +57,7 @@ val Typography = Typography(
     labelMedium = TextStyle(
         fontFamily = KarlaFontFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
+        fontSize = 15.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp,
         color = Black
